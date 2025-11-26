@@ -1,0 +1,31 @@
+# General
+.DS_Store
+.env
+.env.local
+.vscode/
+.idea/
+*.log
+
+# Backend (Python)
+backend/venv/
+backend/env/
+backend/__pycache__/
+backend/*.pyc
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Frontend (Node)
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.eslintcache
+frontend/coverage/
+frontend/.npm
+frontend/.cache
+
+# OS
+Thumbs.db
