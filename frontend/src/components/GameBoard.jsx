@@ -387,12 +387,13 @@ const GameBoard = () => {
 
             {/* Spotify Embed Fallback for Free Users */}
             {!isPlayerReady && currentTrack && (
-                <div className="absolute bottom-4 right-4 z-40 w-80 h-20 pointer-events-auto">
+                <div className="absolute bottom-4 right-4 z-40 w-80 h-20 pointer-events-auto overflow-hidden max-w-[90vw]">
                     <iframe
                         src={`https://open.spotify.com/embed/track/${currentTrack.id}?utm_source=generator&theme=0`}
                         width="100%"
                         height="80"
                         frameBorder="0"
+                        scrolling="no"
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                         loading="lazy"
                         className="rounded-xl shadow-xl border-2 border-black"

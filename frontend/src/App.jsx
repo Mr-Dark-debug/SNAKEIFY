@@ -161,20 +161,20 @@ function App() {
     >
       {gameState === 'IDLE' && (
         <div className="flex flex-col items-center w-full max-w-4xl relative z-10 p-4">
-          <div className="text-center mb-12">
-            <h1 className="text-7xl mb-8 neo-text-title text-white drop-shadow-[4px_4px_0px_black]">READY?</h1>
+          <div className="text-center mb-8 md:mb-12 w-full px-4">
+            <h1 className="text-5xl md:text-7xl mb-6 md:mb-8 neo-text-title text-white drop-shadow-[4px_4px_0px_black] break-words">READY?</h1>
 
-            <div className="flex flex-col md:flex-row gap-6 justify-center">
+            <div className="flex flex-col md:flex-row gap-4 md:gap-6 justify-center w-full max-w-md mx-auto">
               <button
                 onClick={startGame}
-                className="neo-button bg-[#FFDE00] text-black text-2xl"
+                className="neo-button bg-[#FFDE00] text-black text-xl md:text-2xl w-full md:w-auto py-3 md:py-4"
               >
                 START GAME
               </button>
 
               <button
                 onClick={() => setShowLeaderboard(!showLeaderboard)}
-                className="neo-button bg-white text-black text-2xl flex items-center gap-3"
+                className="neo-button bg-white text-black text-xl md:text-2xl flex items-center justify-center gap-3 w-full md:w-auto py-3 md:py-4"
               >
                 <BarChart2 className="w-6 h-6" />
                 {showLeaderboard ? "HIDE" : "LEADERBOARD"}
@@ -203,45 +203,45 @@ function App() {
           <GameBoard />
 
           {/* HUD Overlay */}
-          <div className="absolute top-0 left-0 w-full h-full pointer-events-none p-6 flex flex-col justify-between z-10">
+          <div className="fixed top-0 left-0 w-full h-full pointer-events-none p-4 md:p-6 flex flex-col justify-between z-50">
             {/* Top Bar */}
             <div className="flex justify-between items-start">
-              <div className="neo-box p-3 flex items-center gap-4 max-w-xs bg-white pointer-events-auto">
+              <div className="neo-box p-2 md:p-3 flex items-center gap-3 md:gap-4 max-w-[50%] md:max-w-xs bg-white pointer-events-auto">
                 {currentTrack ? (
                   <>
-                    <img src={currentTrack.album.images[2]?.url} className="w-12 h-12 border-2 border-black" />
+                    <img src={currentTrack.album.images[2]?.url} className="w-10 h-10 md:w-12 md:h-12 border-2 border-black" />
                     <div className="overflow-hidden">
-                      <p className="font-bold truncate font-pixel text-xs">{currentTrack.name}</p>
-                      <p className="text-xs text-gray-600 truncate font-bold">{currentTrack.artists[0].name}</p>
+                      <p className="font-bold truncate font-pixel text-[10px] md:text-xs">{currentTrack.name}</p>
+                      <p className="text-[10px] md:text-xs text-gray-600 truncate font-bold">{currentTrack.artists[0].name}</p>
                     </div>
                   </>
                 ) : (
-                  <div className="w-12 h-12 bg-gray-300 border-2 border-black animate-pulse"></div>
+                  <div className="w-10 h-10 md:w-12 md:h-12 bg-gray-300 border-2 border-black animate-pulse"></div>
                 )}
               </div>
 
-              <div className="neo-box px-6 py-3 bg-[#FF90E8]">
-                <span className="text-2xl font-pixel text-black">{score}</span>
+              <div className="neo-box px-4 py-2 md:px-6 md:py-3 bg-[#FF90E8]">
+                <span className="text-xl md:text-2xl font-pixel text-black">{score}</span>
               </div>
             </div>
 
             {/* Bottom Bar */}
             <div className="flex justify-between items-end w-full">
-              <div className="flex gap-4 pointer-events-auto">
+              <div className="flex gap-3 md:gap-4 pointer-events-auto mb-28 md:mb-0">
                 <button
                   onClick={togglePause}
-                  className="neo-button p-4 bg-white hover:bg-gray-100"
+                  className="neo-button p-3 md:p-4 bg-white hover:bg-gray-100"
                 >
-                  {isPaused ? <Play className="w-6 h-6 text-black fill-black" /> : <Pause className="w-6 h-6 text-black stroke-[3]" />}
+                  {isPaused ? <Play className="w-5 h-5 md:w-6 md:h-6 text-black fill-black" /> : <Pause className="w-5 h-5 md:w-6 md:h-6 text-black stroke-[3]" />}
                 </button>
                 <button
                   onClick={() => {
                     setGameState('IDLE');
                     window.location.reload();
                   }}
-                  className="neo-button p-4 bg-[#FF5252] hover:bg-red-600 border-4 border-black shadow-[4px_4px_0px_0px_black]"
+                  className="neo-button p-3 md:p-4 bg-[#FF5252] hover:bg-red-600 border-4 border-black shadow-[4px_4px_0px_0px_black]"
                 >
-                  <LogOut className="w-6 h-6 text-black stroke-[3]" />
+                  <LogOut className="w-5 h-5 md:w-6 md:h-6 text-black stroke-[3]" />
                 </button>
               </div>
             </div>
