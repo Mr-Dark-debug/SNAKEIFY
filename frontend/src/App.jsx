@@ -11,7 +11,7 @@ function App() {
     accessToken, setAccessToken, setUser,
     setGameState, setSongs, setNextTrack,
     gameState, score, isPaused, togglePause,
-    currentTrack
+    currentTrack, bgColor
   } = useGameStore();
 
   const [showLeaderboard, setShowLeaderboard] = useState(false);
@@ -111,7 +111,10 @@ function App() {
 
   // Authenticated UI
   return (
-    <div className="min-h-screen text-black flex flex-col items-center justify-center transition-colors duration-500 touch-none font-mono bg-[#FF90E8]">
+    <div
+      className="min-h-screen text-black flex flex-col items-center justify-center transition-colors duration-500 touch-none font-mono"
+      style={{ backgroundColor: bgColor }}
+    >
       {gameState === 'IDLE' && (
         <div className="flex flex-col items-center w-full max-w-4xl relative z-10 p-4">
           <div className="text-center mb-12">
@@ -185,16 +188,16 @@ function App() {
                   onClick={togglePause}
                   className="neo-button p-4 bg-white hover:bg-gray-100"
                 >
-                  {isPaused ? <Play className="w-6 h-6" /> : <Pause className="w-6 h-6" />}
+                  {isPaused ? <Play className="w-6 h-6 text-black fill-black" /> : <Pause className="w-6 h-6 text-black stroke-[3]" />}
                 </button>
                 <button
                   onClick={() => {
                     setGameState('IDLE');
                     window.location.reload();
                   }}
-                  className="neo-button p-4 bg-[#FF5252] text-white hover:bg-red-600 border-4 border-black shadow-[4px_4px_0px_0px_black]"
+                  className="neo-button p-4 bg-[#FF5252] hover:bg-red-600 border-4 border-black shadow-[4px_4px_0px_0px_black]"
                 >
-                  <LogOut className="w-6 h-6" />
+                  <LogOut className="w-6 h-6 text-white stroke-[3]" />
                 </button>
               </div>
             </div>

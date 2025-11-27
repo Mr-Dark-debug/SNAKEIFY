@@ -1,29 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { Trophy, Music, Play, Pause, User, RefreshCw } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const Leaderboard = () => {
-    const { user } = useGameStore();
+    useGameStore(); // Keep store connection
     const [leaders, setLeaders] = useState([]);
     const [selectedSession, setSelectedSession] = useState(null);
     const [history, setHistory] = useState([]);
     const [playingPreview, setPlayingPreview] = useState(null);
     const [audio, setAudio] = useState(new Audio());
 
-    useEffect(() => {
-        fetchLeaderboard();
-    }, []);
-
-    const fetchLeaderboard = async () => {
+    const fetchLeaderboard = useCallback(async () => {
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/leaderboard?limit=10`);
             const data = await res.json();
-            setLeaders(data);
+            return data;
         } catch (e) {
             console.error("Failed to fetch leaderboard", e);
+            return [];
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        let isMounted = true;
+        fetchLeaderboard().then(data => {
+            if (isMounted) setLeaders(data);
+        });
+        return () => { isMounted = false; };
+    }, [fetchLeaderboard]);
 
     const fetchHistory = async (sessionId) => {
         try {
@@ -64,7 +69,7 @@ const Leaderboard = () => {
                     <Trophy className="text-black w-8 h-8" />
                     GLOBAL RANKINGS
                 </h2>
-                <button onClick={fetchLeaderboard} className="neo-button bg-[#23A6F0] text-black flex items-center gap-2">
+                <button onClick={() => fetchLeaderboard().then(setLeaders)} className="neo-button bg-[#23A6F0] text-black flex items-center gap-2">
                     <RefreshCw className="w-4 h-4" />
                     REFRESH
                 </button>

@@ -16,6 +16,7 @@ export const useGameStore = create((set) => ({
     songs: [], // Global song queue
 
     eatenSongs: [], // History of eaten songs
+    bgColor: '#FF90E8', // Default background color
 
     setGameState: (state) => set({ gameState: state }),
     setIsPaused: (paused) => set({ isPaused: paused }),
@@ -31,12 +32,14 @@ export const useGameStore = create((set) => ({
     setUser: (user) => set({ user }),
     setAccessToken: (token) => set({ accessToken: token }),
     addEatenSong: (song) => set((state) => ({ eatenSongs: [...state.eatenSongs, song] })),
+    setBgColor: (color) => set({ bgColor: color }),
     resetGame: () => set({
         gameState: 'IDLE',
         score: 0,
         snakeBody: [{ x: 10, y: 10, imgUrl: null }],
         direction: { x: 1, y: 0 },
         food: null,
-        eatenSongs: []
+        eatenSongs: [],
+        bgColor: '#FF90E8'
     })
 }));

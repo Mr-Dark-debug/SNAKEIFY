@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { useSwipeable } from 'react-swipeable';
 import ColorThief from 'colorthief';
+import { RefreshCw } from 'lucide-react';
 
 const GRID_SIZE = 20;
 const CELL_SIZE = 20;
@@ -11,23 +12,31 @@ const GameBoard = () => {
     const {
         gameState, isPaused, snakeBody, food, direction, score, currentTrack, nextTrack, songs,
         setGameState, setSnakeBody, setFood, setDirection, incrementScore,
-        setCurrentTrack, setNextTrack, resetGame, user, eatenSongs, addEatenSong
+        setCurrentTrack, setNextTrack, resetGame, user, eatenSongs, addEatenSong, setBgColor
     } = useGameStore();
 
     const [audio, setAudio] = useState(new Audio());
     const [nextAudio, setNextAudio] = useState(new Audio());
-    const [bgColor, setBgColor] = useState('#f0f0f0');
 
-    // Initialize Audio
+    // Initialize Audio & Game
     useEffect(() => {
-        if (songs.length > 0 && !currentTrack && !nextTrack) {
+        if (songs.length > 0 && !currentTrack) {
             const firstTrack = songs[0];
-            setNextTrack(firstTrack);
+            const secondTrack = songs.length > 1 ? songs[1] : songs[0];
+
+            setCurrentTrack(firstTrack);
+            setNextTrack(secondTrack);
 
             if (firstTrack.preview_url) {
                 const firstAudio = new Audio(firstTrack.preview_url);
-                firstAudio.preload = 'auto';
-                setNextAudio(firstAudio);
+                firstAudio.loop = true;
+                setAudio(firstAudio);
+            }
+
+            if (secondTrack.preview_url) {
+                const secondAudio = new Audio(secondTrack.preview_url);
+                secondAudio.preload = 'auto';
+                setNextAudio(secondAudio);
             }
         }
     }, [songs]);
@@ -53,7 +62,6 @@ const GameBoard = () => {
                     const color = colorThief.getColor(img);
                     const rgb = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
                     setBgColor(rgb);
-                    document.body.style.backgroundColor = rgb;
                 } catch (e) {
                     console.warn("ColorThief failed", e);
                 }
@@ -62,19 +70,20 @@ const GameBoard = () => {
     }, [currentTrack]);
 
     // Spawn Food with Preloaded Image
-    const spawnFood = () => {
+    const spawnFood = (trackToSpawn) => {
         let newFood;
+        const track = trackToSpawn || currentTrack || songs[0];
+
         while (true) {
             const x = Math.floor(Math.random() * GRID_SIZE);
             const y = Math.floor(Math.random() * GRID_SIZE);
             if (!snakeBody.some(s => s.x === x && s.y === y)) {
-                const track = nextTrack || songs[0];
                 newFood = { x, y, track };
 
                 // Preload Image
                 if (track && track.album.images && track.album.images.length > 0) {
                     const img = new Image();
-                    img.crossOrigin = 'Anonymous'; // Needed for ColorThief later if we use food for color
+                    img.crossOrigin = 'Anonymous';
                     img.src = track.album.images[track.album.images.length - 1].url;
                     newFood.imageElement = img;
                 }
@@ -87,9 +96,9 @@ const GameBoard = () => {
     // Initial Spawn
     useEffect(() => {
         if (gameState === 'PLAYING' && songs.length > 0 && !food) {
-            spawnFood();
+            spawnFood(currentTrack);
         }
-    }, [gameState, songs]);
+    }, [gameState, songs, currentTrack]);
 
     const playNextSong = () => {
         if (!nextTrack) return;
@@ -100,12 +109,15 @@ const GameBoard = () => {
         newAudio.loop = true;
         newAudio.play().catch(e => console.error("Audio play failed", e));
         setAudio(newAudio);
-        setCurrentTrack(nextTrack);
+
+        const newCurrentTrack = nextTrack;
+        setCurrentTrack(newCurrentTrack);
 
         // Prepare next-next song
         let upcomingIndex = Math.floor(Math.random() * songs.length);
         let upcomingTrack = songs[upcomingIndex];
 
+        // Avoid repeating the same song immediately if possible
         if (upcomingTrack.id === nextTrack.id && songs.length > 1) {
             upcomingIndex = (upcomingIndex + 1) % songs.length;
             upcomingTrack = songs[upcomingIndex];
@@ -119,6 +131,8 @@ const GameBoard = () => {
         } else {
             setNextAudio(new Audio());
         }
+
+        return newCurrentTrack;
     };
 
     const gameOver = () => {
@@ -135,10 +149,6 @@ const GameBoard = () => {
                 preview_url: s.track.preview_url,
                 spotify_uri: s.track.uri
             }));
-
-            // Log the eaten songs for debugging
-            console.log("Eaten songs count:", formattedSongs.length);
-            console.log("Eaten songs:", formattedSongs);
 
             fetch(`${import.meta.env.VITE_API_URL}/score?user_id=${user.id}`, {
                 method: 'POST',
@@ -159,9 +169,6 @@ const GameBoard = () => {
             const newHead = {
                 x: snakeBody[0].x + direction.x,
                 y: snakeBody[0].y + direction.y,
-                imgUrl: null,
-                track: null,
-                imageElement: null
             };
 
             // Wrap-around Logic
@@ -182,34 +189,16 @@ const GameBoard = () => {
             if (food && newHead.x === food.x && newHead.y === food.y) {
                 incrementScore();
 
-                // Assign image to the NEW HEAD segment
-                if (food.imageElement) {
-                    newBody[0].imageElement = food.imageElement;
-                } else if (food.track && food.track.album.images.length > 0) {
-                    const img = new Image();
-                    img.crossOrigin = 'Anonymous';
-                    img.src = food.track.album.images[food.track.album.images.length - 1].url;
-                    newBody[0].imageElement = img;
-                }
-
-                newBody[0].imgUrl = food.track.album.images[food.track.album.images.length - 1]?.url;
-                newBody[0].track = food.track;
-
                 // Add to history
                 addEatenSong({
                     track: food.track,
-                    imgUrl: newBody[0].imgUrl
+                    imgUrl: food.track.album.images[food.track.album.images.length - 1]?.url,
+                    imageElement: food.imageElement
                 });
 
-                playNextSong();
-                spawnFood();
+                const nextSong = playNextSong();
+                spawnFood(nextSong);
             } else {
-                // When not eating, preserve track info from previous head
-                if (snakeBody.length > 0) {
-                    newBody[0].track = snakeBody[0].track;
-                    newBody[0].imgUrl = snakeBody[0].imgUrl;
-                    newBody[0].imageElement = snakeBody[0].imageElement;
-                }
                 newBody.pop();
             }
 
@@ -278,28 +267,32 @@ const GameBoard = () => {
                 ctx.closePath();
                 ctx.fill();
 
-            } else if (segment.imageElement) {
-                // Draw Album Art Body
-                try {
-                    ctx.save();
-                    ctx.drawImage(segment.imageElement, segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+            } else {
+                // Draw Body Segment with Image from History
+                const song = eatenSongs[index - 1];
 
-                    // Thick Black Border for Neo-Brutalism
+                if (song && song.imageElement) {
+                    try {
+                        ctx.save();
+                        ctx.drawImage(song.imageElement, segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+                        // Thick Black Border for Neo-Brutalism
+                        ctx.strokeStyle = '#000000';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                        ctx.restore();
+                    } catch (e) {
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                        ctx.strokeRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    }
+                } else {
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
                     ctx.strokeStyle = '#000000';
                     ctx.lineWidth = 2;
                     ctx.strokeRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-                    ctx.restore();
-                } catch (e) {
-                    ctx.fillStyle = '#FFFFFF';
-                    ctx.fillRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-                    ctx.strokeRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
                 }
-            } else {
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
-                ctx.strokeStyle = '#000000';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(segment.x * CELL_SIZE, segment.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             }
         });
 
@@ -326,7 +319,7 @@ const GameBoard = () => {
                 ctx.strokeRect(food.x * CELL_SIZE, food.y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
             }
         }
-    }, [snakeBody, food, direction]);
+    }, [snakeBody, food, direction, eatenSongs]);
 
     const handleKeyDown = (e) => {
         switch (e.key) {
@@ -369,7 +362,7 @@ const GameBoard = () => {
                 className="neo-box bg-white/50 backdrop-blur-sm"
             />
             {gameState === 'GAME_OVER' && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
+                <div className="absolute inset-0 flex items-center justify-center bg-white/10 backdrop-blur-xl z-50">
                     <div className="neo-box-yellow p-8 text-center max-w-md w-full mx-4 transform rotate-1">
                         <h2 className="text-5xl font-bold mb-4 font-pixel text-black">GAME OVER</h2>
                         <p className="text-xl mb-6 font-bold uppercase">"{getSarcasticMessage(score)}"</p>
@@ -381,9 +374,9 @@ const GameBoard = () => {
 
                         <button
                             onClick={resetGame}
-                            className="neo-button bg-black text-white hover:bg-gray-900 w-full"
+                            className="neo-button !bg-black !text-white hover:!bg-gray-900 w-full flex items-center justify-center gap-2"
                         >
-                            PLAY AGAIN 🔄
+                            PLAY AGAIN <RefreshCw className="w-5 h-5" />
                         </button>
                     </div>
                 </div>
